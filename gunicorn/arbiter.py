@@ -58,6 +58,7 @@ class Arbiter(object):
         self.worker_age = 0
         self.reexec_pid = 0
         self.master_name = "Master"
+        self.parent_pid = os.getppid()
 
         # get current path, try to use PWD env first
         try:
@@ -308,6 +309,10 @@ class Arbiter(object):
         """
         try:
             ready = select.select([self.PIPE[0]], [], [], 1.0)
+            ppid = os.getppid()
+            if ppid != self.parent_pid:
+                self.log.info("Parent PID changed from %s to %s. Exiting.", self.parent_pid, ppid)
+                sys.exit()
             if not ready[0]:
                 return
             while os.read(self.PIPE[0], 1):
